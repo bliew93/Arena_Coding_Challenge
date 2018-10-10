@@ -24,7 +24,6 @@ const outStream = new stream();
 let readLine = readline.createInterface(inStream, outStream);
 
 const artistHash = {};
-const artistPairsArr = [];
 let listNum = 0;
 
 readLine.on("line", line => {
@@ -34,8 +33,8 @@ readLine.on("line", line => {
 
 readLine.on("close", () => {
   cullValues(artistHash);
-  artistPairs(artistHash);
-  fs.writeFileSync(outputFile, artistPairsArr.join("\n"), "utf-8");
+  const pairs = artistPairs(artistHash);
+  fs.writeFileSync(outputFile, pairs, "utf-8");
 });
 
 // helper function to parse line
@@ -64,14 +63,28 @@ const cullValues = hash => {
   }
 };
 
+// helper function to check if a pair exists
+const hasPair = (arr1, arr2) => {
+  return arr1.some(pair => pair.every((el, idx) => el === arr2[idx]));
+};
+
+// helper function to check if a reverse pair exists
+const hasReversePair = (arr1, arr2) => {
+  arr2 = arr2.reverse();
+  return arr1.some(pair => pair.every((el, idx) => el === arr2[idx]));
+};
+
 // helper function to find artist pairs
 const artistPairs = hash => {
+  const artistPairsArr = [];
+
   for (artist in hash) {
     for (otherArtist in hash) {
       let pair = [artist, otherArtist];
+
       if (
-        !artistPairsArr.includes(pair) &&
-        !artistPairsArr.includes(pair.reverse()) &&
+        !hasPair(artistPairsArr, pair) &&
+        !hasReversePair(artistPairsArr, pair) &&
         artist !== otherArtist
       ) {
         let sameListsNum = hash[artist].filter(list =>
@@ -86,6 +99,8 @@ const artistPairs = hash => {
   }
 
   for (let i = 0; i < artistPairsArr.length; i++) {
-    artistPairsArr[i] = `${artistPairsArr[i].join(", ")}`;
+    artistPairsArr[i] = artistPairsArr[i].join(",");
   }
+
+  return artistPairsArr.join("\n");
 };
